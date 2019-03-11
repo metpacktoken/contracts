@@ -1,7 +1,7 @@
 # Makefile for an eosio smart contact
 
 CC=eosio-cpp
-Contract=mptoken
+Contract=metpacktoken
 
 all:
 	@echo "Building"
