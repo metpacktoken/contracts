@@ -6,6 +6,7 @@
 
 #include <eosiolib/asset.hpp>
 #include <eosiolib/eosio.hpp>
+#include <eosiolib/symbol.hpp>
 
 #include <string>
 
@@ -19,14 +20,24 @@ namespace eosio {
 
    class [[eosio::contract("metpacktoken")]] token : public contract {
       public:
-         using contract::contract;
+         using contract::contract;        
 
          [[eosio::action]]
          void create( name   issuer,
                       asset  maximum_supply);
 
          [[eosio::action]]
+         void update( name issuer,
+                      const symbol& symbol);
+
+         [[eosio::action]]
          void issue( name to, asset quantity, string memo );
+
+         [[eosio::action]]
+         void claim( name owner, const symbol& sym );
+
+         [[eosio::action]]
+         void recover( name owner, const symbol& sym );
 
          [[eosio::action]]
          void retire( asset quantity, string memo );
@@ -60,7 +71,7 @@ namespace eosio {
       private:
          struct [[eosio::table]] account {
             asset    balance;
-
+            bool     claimed = false;
             uint64_t primary_key()const { return balance.symbol.code().raw(); }
          };
 
@@ -76,7 +87,9 @@ namespace eosio {
          typedef eosio::multi_index< "stat"_n, currency_stats > stats;
 
          void sub_balance( name owner, asset value );
-         void add_balance( name owner, asset value, name ram_payer );
+         void add_balance( name owner, asset value, name ram_payer, bool claimed );
+         void do_claim( name owner, const symbol& sym, name payer );
+
    };
 
 } /// namespace eosio
