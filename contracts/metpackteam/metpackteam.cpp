@@ -1,5 +1,6 @@
 #include <eosiolib/asset.hpp>
 #include <eosiolib/eosio.hpp>
+#include "../metpacktoken/metpacktoken.hpp"
 
 using namespace eosio;
 
@@ -76,7 +77,9 @@ class [[eosio::contract]] metpackteam : public contract {
             stats statstable( get_self(), get_self().value );
             auto statsiterator = statstable.find( contractname.value );
             eosio_assert( statsiterator != statstable.end(), "contract not initialized");
-            // TODO: Check if this contract has enough balance to pay out the credit 
+            // Check if this contract has enough balance to pay out the credit 
+            asset currbalance = token::get_balance( contractname, get_self(), member_credit.symbol.code());
+            eosio_assert( currbalance.amount >= statstable.get(contractname.value).totalCredit + member_credit.amount, "insufficient funds");
 
             // update total owed credit
             statstable.modify(statsiterator, get_self(), [&]( auto& statrow )
