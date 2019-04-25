@@ -62,4 +62,5 @@
 # Ignore all local history of files
 .history
 
+*.log
 # End of https://www.gitignore.io/api/c++,linux,visualstudiocode
