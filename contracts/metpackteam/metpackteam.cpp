@@ -17,57 +17,17 @@ class [[eosio::contract]] metpackteam : public contract {
             // Lookup currency in statstable
             eosio_assert( curr.is_valid(), "invalid symbol name" );
             stats statstable( get_self(), get_self().value );
-            auto existing = statstable.find( curr.code().raw() );
-            // eosio_assert( existing == statstable.end(), "token with symbol already initialized" );
+            auto existing = statstable.find( tokencontract.value );
+            eosio_assert( existing == statstable.end(), "token with symbol already exists" );
             // Modification possible during testing
-            if( existing == statstable.end())
-            {
-                statstable.emplace( get_self(), [&]( auto& s ) {
-                    s.tokencontract = tokencontract;
-                    s.currency = curr;
-                    s.airdropTimestamp = airdropTime;
-                    s.lockupPeriodSeconds = lockupPeriod;
-                    s.totalCredit = 0;              
-                });
-            }
-            else
-            {
-                statstable.modify(existing, get_self(), [&]( auto& s ) {
-                    s.tokencontract = tokencontract;
-                    s.currency = curr;
-                    s.airdropTimestamp = airdropTime;
-                    s.lockupPeriodSeconds = lockupPeriod;
-                    s.totalCredit = 0; 
-                });
-            }
-            
-            
+            statstable.emplace( get_self(), [&]( auto& s ) {
+                s.tokencontract = tokencontract;
+                s.currency = curr;
+                s.airdropTimestamp = airdropTime;
+                s.lockupPeriodSeconds = lockupPeriod;
+                s.totalCredit = 0;
+            });
         }
-
-        // [[eosio::action]]
-        // void withdraw( name member, name tokencontract, symbol currency )
-        // {
-        //     require_auth( member );
-        //     eosio_assert(canwithdraw(tokencontract, currency), "contract not initialized");        
-        //     eosio_assert(now() > airdropTimestamp + lockupPeriodSeconds, "tokens are still locked");
-        //     team_index teamlist(get_self(), get_self().value);        
-        //     asset credit = teamlist.get(member.value, "team member not found").credit;
-        //     // substract credit from totalCredit
-        //     totalCredit -= credit.amount;
-        //     // Transfer MPT to member account
-        //     action withdrawCredit = action( 
-        //         //permission_level
-        //         permission_level(get_self(),"active"_n),
-        //         //code (target contract)
-        //         "metpacktoken"_n,
-        //         //action in target contract
-        //         "transfer"_n,
-        //         //data
-        //         std::make_tuple(get_self(), member, credit, "teamwithdraw")
-        //     );
-
-        //     withdrawCredit.send();
-        // }
 
         [[eosio::action]]
         void addmember( name member_name, name contractname, asset member_credit )
@@ -96,6 +56,42 @@ class [[eosio::contract]] metpackteam : public contract {
             });
         }
 
+        [[eosio::action]]
+        void withdraw( name owner, name tokencontract, symbol currency )
+        {
+            require_auth( owner );
+            eosio_assert(currency.is_valid(), "invalid symbol");
+
+            stats statstable( get_self(), get_self().value );
+            
+            stat token_entry = statstable.get(tokencontract.value, "token not found");
+            eosio_assert( token_entry.currency == currency, "invalid token" );
+            team_index teamlist(get_self(), get_self().value);
+            auto iterator = teamlist.find( owner.value );
+            member team_member = teamlist.get(owner.value, "team member not found");
+            
+            eosio_assert(token_entry.airdropTimestamp + token_entry.lockupPeriodSeconds < now(), "lockup period has not passed, be patient!");
+
+            asset to_pay = team_member.credit;
+
+            // remove team member from table
+            teamlist.erase(iterator);
+
+            // Transfer MPT to member account
+            action withdrawCredit = action( 
+                //permission_level
+                permission_level(get_self(),"active"_n),
+                //code (target contract)
+                "metpacktoken"_n,
+                //action in target contract
+                "transfer"_n,
+                //data
+                std::make_tuple(get_self(), owner, to_pay, std::string("teamwithdraw"))
+            );
+
+            withdrawCredit.send();
+        }
+
     private:      
         struct [[eosio::table]] stat {
             name        tokencontract;
@@ -118,4 +114,4 @@ class [[eosio::contract]] metpackteam : public contract {
         typedef eosio::multi_index<"team"_n, member> team_index;
 };
 
-EOSIO_DISPATCH( metpackteam, (addtoken) (addmember) )
+EOSIO_DISPATCH( metpackteam, (addtoken) (addmember) (withdraw))

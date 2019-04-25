@@ -1,5 +1,5 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Thu Apr 25 11:58:14 2019",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Thu Apr 25 14:06:07 2019",
     "version": "eosio::abi/1.1",
     "structs": [
         {
@@ -81,6 +81,24 @@
                     "type": "uint64"
                 }
             ]
+        },
+        {
+            "name": "withdraw",
+            "base": "",
+            "fields": [
+                {
+                    "name": "owner",
+                    "type": "name"
+                },
+                {
+                    "name": "tokencontract",
+                    "type": "name"
+                },
+                {
+                    "name": "currency",
+                    "type": "symbol"
+                }
+            ]
         }
     ],
     "types": [],
@@ -93,6 +111,11 @@
         {
             "name": "addtoken",
             "type": "addtoken",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "withdraw",
+            "type": "withdraw",
             "ricardian_contract": ""
         }
     ],
