@@ -1,6 +1,6 @@
 #include <eosiolib/asset.hpp>
 #include <eosiolib/eosio.hpp>
-#include "../metpacktoken/metpacktoken.hpp"
+#include "metpacktoken.hpp"
 
 using namespace eosio;
 
@@ -18,8 +18,7 @@ class [[eosio::contract]] metpackteam : public contract {
             eosio_assert( curr.is_valid(), "invalid symbol name" );
             stats statstable( get_self(), get_self().value );
             auto existing = statstable.find( tokencontract.value );
-            eosio_assert( existing == statstable.end(), "token with symbol already exists" );
-            // Modification possible during testing
+            eosio_assert( existing == statstable.end(), "token already exists" );            
             statstable.emplace( get_self(), [&]( auto& s ) {
                 s.tokencontract = tokencontract;
                 s.currency = curr;
@@ -36,7 +35,7 @@ class [[eosio::contract]] metpackteam : public contract {
             eosio_assert( member_credit.symbol.is_valid(), "invalid symbol name" );
             stats statstable( get_self(), get_self().value );
             auto statsiterator = statstable.find( contractname.value );
-            eosio_assert( statsiterator != statstable.end(), "contract not initialized");
+            eosio_assert( statsiterator != statstable.end(), "token not found");
             // Check if this contract has enough balance to pay out the credit 
             asset currbalance = token::get_balance( contractname, get_self(), member_credit.symbol.code());
             eosio_assert( currbalance.amount >= statstable.get(contractname.value).totalCredit + member_credit.amount, "insufficient funds");
@@ -82,7 +81,7 @@ class [[eosio::contract]] metpackteam : public contract {
                 //permission_level
                 permission_level(get_self(),"active"_n),
                 //code (target contract)
-                "metpacktoken"_n,
+                tokencontract,
                 //action in target contract
                 "transfer"_n,
                 //data
