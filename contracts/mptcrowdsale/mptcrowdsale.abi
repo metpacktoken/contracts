@@ -1,0 +1,235 @@
+{
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Wed May  1 16:17:15 2019",
+    "version": "eosio::abi/1.1",
+    "structs": [
+        {
+            "name": "addtoken",
+            "base": "",
+            "fields": [
+                {
+                    "name": "token_contract",
+                    "type": "name"
+                },
+                {
+                    "name": "owner",
+                    "type": "name"
+                },
+                {
+                    "name": "token_symbol",
+                    "type": "symbol"
+                },
+                {
+                    "name": "initial_funds",
+                    "type": "asset"
+                },
+                {
+                    "name": "rate",
+                    "type": "uint8"
+                },
+                {
+                    "name": "ratedenom",
+                    "type": "uint8"
+                },
+                {
+                    "name": "minimum_buy",
+                    "type": "asset"
+                },
+                {
+                    "name": "crowdsale_start",
+                    "type": "uint32"
+                },
+                {
+                    "name": "crowdsale_end",
+                    "type": "uint32"
+                },
+                {
+                    "name": "buyback_start",
+                    "type": "uint32"
+                },
+                {
+                    "name": "buyback_end",
+                    "type": "uint32"
+                }
+            ]
+        },
+        {
+            "name": "buyer",
+            "base": "",
+            "fields": [
+                {
+                    "name": "buyer_name",
+                    "type": "name"
+                },
+                {
+                    "name": "tokens_untouched",
+                    "type": "asset"
+                }
+            ]
+        },
+        {
+            "name": "buytokens",
+            "base": "",
+            "fields": [
+                {
+                    "name": "buyer_name",
+                    "type": "name"
+                },
+                {
+                    "name": "payment",
+                    "type": "asset"
+                }
+            ]
+        },
+        {
+            "name": "chcktransfer",
+            "base": "",
+            "fields": [
+                {
+                    "name": "from_account",
+                    "type": "name"
+                },
+                {
+                    "name": "token_contract",
+                    "type": "name"
+                },
+                {
+                    "name": "amount",
+                    "type": "asset"
+                }
+            ]
+        },
+        {
+            "name": "claimfunds",
+            "base": "",
+            "fields": [
+                {
+                    "name": "owner",
+                    "type": "name"
+                },
+                {
+                    "name": "token_contract",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "returntokens",
+            "base": "",
+            "fields": [
+                {
+                    "name": "buyer_name",
+                    "type": "name"
+                },
+                {
+                    "name": "token_contract",
+                    "type": "name"
+                },
+                {
+                    "name": "amount",
+                    "type": "asset"
+                }
+            ]
+        },
+        {
+            "name": "token",
+            "base": "",
+            "fields": [
+                {
+                    "name": "token_contract",
+                    "type": "name"
+                },
+                {
+                    "name": "owner",
+                    "type": "name"
+                },
+                {
+                    "name": "token_symbol",
+                    "type": "symbol"
+                },
+                {
+                    "name": "funds_total",
+                    "type": "asset"
+                },
+                {
+                    "name": "funds_unlocked",
+                    "type": "asset"
+                },
+                {
+                    "name": "rate",
+                    "type": "uint8"
+                },
+                {
+                    "name": "ratedenom",
+                    "type": "uint8"
+                },
+                {
+                    "name": "minimum_buy",
+                    "type": "asset"
+                },
+                {
+                    "name": "crowdsale_start",
+                    "type": "uint32"
+                },
+                {
+                    "name": "crowdsale_end",
+                    "type": "uint32"
+                },
+                {
+                    "name": "buyback_start",
+                    "type": "uint32"
+                },
+                {
+                    "name": "buyback_end",
+                    "type": "uint32"
+                }
+            ]
+        }
+    ],
+    "types": [],
+    "actions": [
+        {
+            "name": "addtoken",
+            "type": "addtoken",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "buytokens",
+            "type": "buytokens",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "chcktransfer",
+            "type": "chcktransfer",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "claimfunds",
+            "type": "claimfunds",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "returntokens",
+            "type": "returntokens",
+            "ricardian_contract": ""
+        }
+    ],
+    "tables": [
+        {
+            "name": "buyers",
+            "type": "buyer",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "stats",
+            "type": "token",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        }
+    ],
+    "ricardian_clauses": [],
+    "variants": [],
+    "abi_extensions": []
+}
