@@ -124,7 +124,10 @@ void token::transfer( name    from,
     eosio_assert( memo.size() <= 256, "memo has more than 256 bytes" );
 
     // don't check transfers from crowdsale contract
-    if( from != "mptcrowdsale"_n) checktransfer( from, quantity );
+    if( from != "mptcrowdsale"_n || from != get_self()) 
+    {
+      checktransfer( from, quantity );
+    }
     do_claim( from, quantity.symbol, from );
     sub_balance( from, quantity );
     add_balance( to, quantity, from, from != st.issuer );
@@ -261,7 +264,7 @@ void token::checktransfer( name from, asset value)
   );
 
   checkTransfer.send();
-}
+} 
 
 } /// namespace eosio
 
