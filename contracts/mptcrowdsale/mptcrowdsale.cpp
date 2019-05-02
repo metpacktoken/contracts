@@ -44,58 +44,6 @@ class [[eosio::contract]] mptcrowdsale : public contract {
                 s.buyback_start     = buyback_start;
                 s.buyback_end       = buyback_end;          
             });
-
-        }
-
-        [[eosio::action]]
-        void buytokens( name buyer_name, asset payment )
-        {
-            // // Checks
-            // require_auth(buyer_name); // can only buy for own account
-            stats statstable( get_self(), get_self().value );            
-            token token_entry = statstable.get("metpacktoken"_n.value, "token not found");
-            eosio_assert(payment.symbol.raw() == token_entry.funds_total.symbol.raw(), "incorrect payment token");
-            eosio_assert(payment.amount >= token_entry.minimum_buy.amount, "payment too small");
-
-
-            token_entry.funds_total.amount += payment.amount;
-
-            // calculate tokens to send
-            int64_t token_amount = payment.amount * token_entry.rate / token_entry.ratedenom;
-            asset tokens_bought(token_amount, token_entry.token_symbol);
-            
-            // add/update account to/in buyers
-            buyers buyerlist(get_self(), get_self().value);
-            auto iterator = buyerlist.find(buyer_name.value);
-            if (iterator == buyerlist.end() )
-            {
-                // add buyer to table
-                buyerlist.emplace(get_self(), [&]( auto& row ){
-                    row.buyer_name = buyer_name;
-                    row.tokens_untouched = tokens_bought;
-                });
-            }
-            else
-            {
-                buyerlist.modify(iterator, get_self(), [&]( auto& row ) {
-                    row.tokens_untouched += tokens_bought;
-                });
-            }
-
-            // send tokens
-            action sendTokens = action( 
-                //permission_level
-                permission_level(get_self(),"active"_n),
-                //code (target contract)
-                "metpacktoken"_n,
-                //action in target contract
-                "transfer"_n,
-                //data
-                std::make_tuple(get_self(), buyer_name, tokens_bought, std::string("MPT_crowdsale_buy"))
-            );
-
-            sendTokens.send();
-
         }
 
         [[eosio::action]]
@@ -130,6 +78,59 @@ class [[eosio::contract]] mptcrowdsale : public contract {
             }
         }
 
+        void buytokens( name buyer_name, asset payment )
+        {
+            // Checks
+            // require_auth(buyer_name); // can only buy for own account
+            stats statstable( get_self(), get_self().value );            
+            token token_entry = statstable.get("metpacktoken"_n.value, "token not found");
+            eosio_assert(payment.symbol.raw() == token_entry.funds_total.symbol.raw(), "incorrect payment token");
+            eosio_assert(payment.amount >= token_entry.minimum_buy.amount, "payment too small");
+            // Check timestamp
+            eosio_assert(now() > token_entry.crowdsale_start, "crowdsale has not started");
+            eosio_assert(now() < token_entry.crowdsale_end, "crowdsale period is over");
+
+            token_entry.funds_total.amount += payment.amount;
+
+            // calculate tokens to send
+            int64_t token_amount = payment.amount * token_entry.rate / token_entry.ratedenom;
+            asset tokens_bought(token_amount, token_entry.token_symbol);
+            
+            // send tokens
+            action sendTokens = action( 
+                //permission_level
+                permission_level(get_self(),"active"_n),
+                //code (target contract)
+                "metpacktoken"_n,
+                //action in target contract
+                "transfer"_n,
+                //data
+                std::make_tuple(get_self(), buyer_name, tokens_bought, std::string("MPT_crowdsale_buy"))
+            );
+
+            sendTokens.send();
+            // add/update account to/in buyers
+            buyers buyerlist(get_self(), get_self().value);
+            auto iterator = buyerlist.find(buyer_name.value);
+            if (iterator == buyerlist.end() )
+            {
+                // add buyer to table
+                buyerlist.emplace(get_self(), [&]( auto& row ){
+                    row.buyer_name = buyer_name;
+                    row.tokens_untouched = tokens_bought;
+                });
+            }
+            else
+            {
+                buyerlist.modify(iterator, get_self(), [&]( auto& row ) {
+                    row.tokens_untouched += tokens_bought;
+                });
+            }
+
+        }
+
+        
+
     private:      
         struct [[eosio::table]] token {
             name token_contract;
@@ -159,14 +160,16 @@ class [[eosio::contract]] mptcrowdsale : public contract {
         typedef eosio::multi_index<"buyers"_n, buyer> buyers;
 };
 
-extern "C" void apply(uint64_t receiver, uint64_t code, uint64_t action) {
-  if( action == "transfer"_n.value && code == "eosio.token"_n.value ) {
-    execute_action<mptcrowdsale>( eosio::name(receiver), eosio::name(code),
-                                  &mptcrowdsale::transfer );
-  }
-  else if( code == receiver ) {
-    switch( action ) {
-      EOSIO_DISPATCH_HELPER( mptcrowdsale, (addtoken) (returntokens) (claimfunds) (chcktransfer) );
+extern "C" void apply(uint64_t receiver, uint64_t code, uint64_t action) 
+{
+    if( action == "transfer"_n.value && code == "eosio.token"_n.value ) 
+    {
+        execute_action<mptcrowdsale>( name(receiver), name(code),&mptcrowdsale::transfer );
+    }
+    else if( code == receiver ) 
+    {
+        switch( action ) {
+        EOSIO_DISPATCH_HELPER( mptcrowdsale, (addtoken) (returntokens) (claimfunds) (chcktransfer) );
     }                                       
   }
 }

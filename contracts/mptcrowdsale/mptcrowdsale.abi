@@ -1,5 +1,5 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Wed May  1 16:17:15 2019",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Thu May  2 10:33:21 2019",
     "version": "eosio::abi/1.1",
     "structs": [
         {
@@ -62,20 +62,6 @@
                 },
                 {
                     "name": "tokens_untouched",
-                    "type": "asset"
-                }
-            ]
-        },
-        {
-            "name": "buytokens",
-            "base": "",
-            "fields": [
-                {
-                    "name": "buyer_name",
-                    "type": "name"
-                },
-                {
-                    "name": "payment",
                     "type": "asset"
                 }
             ]
@@ -190,11 +176,6 @@
         {
             "name": "addtoken",
             "type": "addtoken",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "buytokens",
-            "type": "buytokens",
             "ricardian_contract": ""
         },
         {
