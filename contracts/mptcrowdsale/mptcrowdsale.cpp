@@ -53,9 +53,34 @@ class [[eosio::contract]] mptcrowdsale : public contract {
         }
 
         [[eosio::action]]
-        void claimfunds( name owner, name token_contract )
+        void claimfunds( name owner )
         {
+            require_auth(owner);
+            stats statstable( get_self(), get_self().value );            
+            token token_entry = statstable.get("metpacktoken"_n.value, "token not found");
+            eosio_assert(token_entry.funds_unlocked.amount > 0, "No unlocked funds available");
+            eosio_assert(token_entry.owner == owner, "only owner can claim funds");
+            
+            asset claimed_funds = token_entry.funds_unlocked;
 
+            statstable.modify(statstable.begin(), get_self(), [&]( auto& row ) {
+                row.funds_total -= claimed_funds;
+                row.funds_unlocked -= claimed_funds;
+            });
+
+            // send tokens
+            action transferEos = action( 
+                //permission_level
+                permission_level(get_self(),"active"_n),
+                //code (target contract)
+                "eosio.token"_n,
+                //action in target contract
+                "transfer"_n,
+                //data
+                std::make_tuple(get_self(), token_entry.owner, claimed_funds, std::string("claim_unlocked_funds"))
+            );
+
+            transferEos.send();
         }
 
         [[eosio::action]]
@@ -81,7 +106,7 @@ class [[eosio::contract]] mptcrowdsale : public contract {
         void buytokens( name buyer_name, asset payment )
         {
             // Checks
-            // require_auth(buyer_name); // can only buy for own account
+            require_auth(buyer_name); // can only buy for own account
             stats statstable( get_self(), get_self().value );            
             token token_entry = statstable.get("metpacktoken"_n.value, "token not found");
             eosio_assert(payment.symbol.raw() == token_entry.funds_total.symbol.raw(), "incorrect payment token");
@@ -90,7 +115,11 @@ class [[eosio::contract]] mptcrowdsale : public contract {
             eosio_assert(now() > token_entry.crowdsale_start, "crowdsale has not started");
             eosio_assert(now() < token_entry.crowdsale_end, "crowdsale period is over");
 
-            token_entry.funds_total.amount += payment.amount;
+            // modify funds in stat table
+            statstable.modify(statstable.begin(), get_self(), [&]( auto& row ) {
+                row.funds_total += payment;
+            });
+            
 
             // calculate tokens to send
             int64_t token_amount = payment.amount * token_entry.rate / token_entry.ratedenom;
