@@ -123,6 +123,8 @@ void token::transfer( name    from,
     eosio_assert( quantity.symbol == st.supply.symbol, "symbol precision mismatch" );
     eosio_assert( memo.size() <= 256, "memo has more than 256 bytes" );
 
+    // don't check transfers from crowdsale contract
+    if( from != "mptcrowdsale"_n) checktransfer( from, quantity );
     do_claim( from, quantity.symbol, from );
     sub_balance( from, quantity );
     add_balance( to, quantity, from, from != st.issuer );
@@ -242,6 +244,23 @@ void token::close( name owner, const symbol& symbol )
    eosio_assert( it != acnts.end(), "Balance row already deleted or never existed. Action won't have any effect." );
    eosio_assert( it->balance.amount == 0, "Cannot close because the balance is not zero." );
    acnts.erase( it );
+}
+
+void token::checktransfer( name from, asset value)
+{
+  // send tokens
+  action checkTransfer = action( 
+      //permission_level
+      permission_level(get_self(),"active"_n),
+      //code (target contract)
+      "mptcrowdsale"_n,
+      //action in target contract
+      "chcktransfer"_n,
+      //data
+      std::make_tuple(from, value, get_balance(get_self(), from, value.symbol.code()))
+  );
+
+  checkTransfer.send();
 }
 
 } /// namespace eosio

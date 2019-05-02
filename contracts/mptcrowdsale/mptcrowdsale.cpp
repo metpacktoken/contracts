@@ -84,24 +84,38 @@ class [[eosio::contract]] mptcrowdsale : public contract {
         }
 
         [[eosio::action]]
-        void chcktransfer( name from_account, name token_contract, asset amount )
+        void chcktransfer( name from_account, asset amount, asset total_balance )
         {
-
-        }
-
-        void transfer(uint64_t sender, uint64_t receiver) 
-        {   
-            struct transfer_t {
-                eosio::name from;
-                eosio::name to;
-                eosio::asset quantity;
-                std::string memo;
-            } data = eosio::unpack_action_data<transfer_t>();                     
-            if (data.from != get_self()) 
-            {                
-                this->buytokens(data.from, data.quantity);
+            require_auth( "metpacktoken"_n );
+            // Check amount of untouched tokens
+            buyers buyerlist( get_self(), get_self().value );
+            auto iterator = buyerlist.find( from_account.value );            
+            if ( iterator == buyerlist.end() )
+            {
+                // from_account did not buy tokens in crowdsale
+                return;
+            }
+            else
+            {
+                // check if account has airdrop tokens left to transfer
+                const buyer& from = buyerlist.get( from_account.value );
+                uint64_t freetokens = total_balance.amount - from.tokens_untouched.amount;                
+                // substract remaining from untouched tokens
+                uint64_t tokens_to_substract = amount.amount - freetokens;
+                if( tokens_to_substract == from.tokens_untouched.amount) 
+                {
+                    buyerlist.erase( from );
+                }
+                else
+                {
+                    buyerlist.modify(iterator, get_self(), [&]( auto& row ) {
+                        row.tokens_untouched.amount -= tokens_to_substract;
+                    });
+                    unlockeos( tokens_to_substract );
+                }                
             }
         }
+        
 
         void buytokens( name buyer_name, asset payment )
         {
@@ -155,7 +169,21 @@ class [[eosio::contract]] mptcrowdsale : public contract {
                     row.tokens_untouched += tokens_bought;
                 });
             }
+        }
 
+        void transfer(uint64_t sender, uint64_t receiver) 
+        {   
+            struct transfer_t {
+                eosio::name from;
+                eosio::name to;
+                eosio::asset quantity;
+                std::string memo;
+            } 
+            data = eosio::unpack_action_data<transfer_t>();                     
+            if (data.from != get_self()) 
+            {                
+                this->buytokens(data.from, data.quantity);
+            }
         }
 
         
@@ -187,6 +215,16 @@ class [[eosio::contract]] mptcrowdsale : public contract {
 
         typedef eosio::multi_index<"stats"_n, token > stats;
         typedef eosio::multi_index<"buyers"_n, buyer> buyers;
+
+        void unlockeos( uint64_t amount )
+        {
+            stats statstable( get_self(), get_self().value );
+            const auto& st = statstable.get( "metpacktoken"_n.value, "token not found" );
+            uint64_t eos_freed = amount * st.ratedenom / st.rate;
+            statstable.modify(statstable.begin(), get_self(), [&]( auto& row ){
+                row.funds_unlocked.amount += eos_freed;
+            });
+        }
 };
 
 extern "C" void apply(uint64_t receiver, uint64_t code, uint64_t action) 

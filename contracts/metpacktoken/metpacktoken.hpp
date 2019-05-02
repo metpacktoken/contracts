@@ -89,6 +89,7 @@ namespace eosio {
          void sub_balance( name owner, asset value );
          void add_balance( name owner, asset value, name ram_payer, bool claimed );
          void do_claim( name owner, const symbol& sym, name payer );
+         void checktransfer( name from, asset value );
 
    };
 

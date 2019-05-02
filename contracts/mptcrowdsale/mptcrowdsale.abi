@@ -1,5 +1,5 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Thu May  2 11:49:16 2019",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Thu May  2 13:28:58 2019",
     "version": "eosio::abi/1.1",
     "structs": [
         {
@@ -75,11 +75,11 @@
                     "type": "name"
                 },
                 {
-                    "name": "token_contract",
-                    "type": "name"
+                    "name": "amount",
+                    "type": "asset"
                 },
                 {
-                    "name": "amount",
+                    "name": "total_balance",
                     "type": "asset"
                 }
             ]
