@@ -132,7 +132,8 @@ class [[eosio::contract]] mptcrowdsale : public contract {
             {
                 // check if account has airdrop tokens left to transfer
                 const auto& from = buyerlist.get( from_account.value );
-                uint64_t freetokens = total_balance.amount - from.tokens_untouched.amount;                
+                uint64_t freetokens = total_balance.amount - from.tokens_untouched.amount;
+                if (freetokens >= amount.amount) return; // Airdrop amount covers transaction
                 // substract remaining from untouched tokens
                 uint64_t tokens_to_substract = amount.amount - freetokens;
                 if( tokens_to_substract == from.tokens_untouched.amount) 
