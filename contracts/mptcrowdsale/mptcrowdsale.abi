@@ -1,5 +1,5 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Thu May  2 13:28:58 2019",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Thu May  2 15:53:20 2019",
     "version": "eosio::abi/1.1",
     "structs": [
         {
@@ -15,8 +15,12 @@
                     "type": "name"
                 },
                 {
-                    "name": "token_symbol",
-                    "type": "symbol"
+                    "name": "available_tokens",
+                    "type": "asset"
+                },
+                {
+                    "name": "minimum_buy",
+                    "type": "asset"
                 },
                 {
                     "name": "initial_funds",
@@ -29,10 +33,6 @@
                 {
                     "name": "ratedenom",
                     "type": "uint8"
-                },
-                {
-                    "name": "minimum_buy",
-                    "type": "asset"
                 },
                 {
                     "name": "crowdsale_start",
@@ -95,24 +95,6 @@
             ]
         },
         {
-            "name": "returntokens",
-            "base": "",
-            "fields": [
-                {
-                    "name": "buyer_name",
-                    "type": "name"
-                },
-                {
-                    "name": "token_contract",
-                    "type": "name"
-                },
-                {
-                    "name": "amount",
-                    "type": "asset"
-                }
-            ]
-        },
-        {
             "name": "token",
             "base": "",
             "fields": [
@@ -125,8 +107,12 @@
                     "type": "name"
                 },
                 {
-                    "name": "token_symbol",
-                    "type": "symbol"
+                    "name": "available_tokens",
+                    "type": "asset"
+                },
+                {
+                    "name": "minimum_buy",
+                    "type": "asset"
                 },
                 {
                     "name": "funds_total",
@@ -143,10 +129,6 @@
                 {
                     "name": "ratedenom",
                     "type": "uint8"
-                },
-                {
-                    "name": "minimum_buy",
-                    "type": "asset"
                 },
                 {
                     "name": "crowdsale_start",
@@ -182,11 +164,6 @@
         {
             "name": "claimfunds",
             "type": "claimfunds",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "returntokens",
-            "type": "returntokens",
             "ricardian_contract": ""
         }
     ],
