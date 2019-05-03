@@ -247,7 +247,7 @@ class [[eosio::contract]] mptcrowdsale : public contract {
             eosio_assert(amount.symbol == st.available_tokens.symbol, "wrong token symbol");
             buyers buyerlist( get_self(), get_self().value );            
             const auto& from = buyerlist.get( from_account.value, "only untraded crowdsale tokens are accepted");
-            eosio_assert(amount <= from.tokens_untouched, "amount too high");
+            eosio_assert(amount <= from.tokens_untouched, "not enough valid tokens");
             // edit untouched tokens
             if (amount == from.tokens_untouched) buyerlist.erase( from );
             else
