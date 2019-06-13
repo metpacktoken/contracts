@@ -16,8 +16,8 @@ class [[eosio::contract]] mptcrowdsale : public contract {
                         asset       available_tokens,
                         asset       minimum_buy,
                         asset       initial_funds,
-                        uint8_t     rate,
-                        uint8_t     ratedenom,                        
+                        uint64_t    rate,
+                        uint64_t    ratedenom,                        
                         uint32_t    crowdsale_start, 
                         uint32_t    crowdsale_end,
                         uint32_t    buyback_start,
@@ -151,8 +151,8 @@ class [[eosio::contract]] mptcrowdsale : public contract {
             asset    minimum_buy;
             asset    funds_total;
             asset    funds_unlocked;
-            uint8_t  rate;
-            uint8_t  ratedenom;            
+            uint64_t rate;
+            uint64_t ratedenom;            
             uint32_t crowdsale_start;
             uint32_t crowdsale_end;
             uint32_t buyback_start;
@@ -241,8 +241,8 @@ class [[eosio::contract]] mptcrowdsale : public contract {
             stats statstable( get_self(), get_self().value );
             const auto& st = statstable.get( "metpacktoken"_n.value, "token not found" );
             // check timestamps
-            eosio_assert(now() > st.crowdsale_start, "buyback period has not started yet");
-            eosio_assert(now() < st.crowdsale_end, "buyback period is over");
+            eosio_assert(now() > st.buyback_start, "buyback period has not started yet");
+            eosio_assert(now() < st.buyback_end, "buyback period is over");
             // check amount
             eosio_assert(amount.symbol == st.available_tokens.symbol, "wrong token symbol");
             buyers buyerlist( get_self(), get_self().value );            
