@@ -25,10 +25,10 @@ class [[eosio::contract]] mptcrowdsale : public contract {
         {
             require_auth(get_self());
             
-            eosio_assert( available_tokens.symbol.is_valid(), "invalid symbol name" );
+            check( available_tokens.symbol.is_valid(), "invalid symbol name" );
             stats statstable( get_self(), get_self().value );
             auto existing = statstable.find( token_contract.value );
-            eosio_assert( existing == statstable.end(), "token already added" );
+            check( existing == statstable.end(), "token already added" );
             
             statstable.emplace( get_self(), [&]( auto& s ) {
                 s.token_contract    = token_contract;
@@ -47,13 +47,13 @@ class [[eosio::contract]] mptcrowdsale : public contract {
         }
 
         [[eosio::action]]
-        void claimfunds( name owner )
+        void claimfunds( name token_contract )
         {
-            require_auth(owner);
+            require_auth(token_contract);
             stats statstable( get_self(), get_self().value );            
-            const auto& token_entry = statstable.get( owner.value, "token not found");
-            eosio_assert(token_entry.funds_unlocked.amount > 0, "No unlocked funds available");
-            eosio_assert(token_entry.owner == owner, "only token owner can claim funds");
+            const auto& token_entry = statstable.get( token_contract.value, "token not found");
+            check(token_entry.funds_unlocked.amount > 0, "No unlocked funds available");
+            check(token_entry.owner == token_contract, "only token contract can claim funds");
             
             asset claimed_funds = token_entry.funds_unlocked;
 
@@ -65,11 +65,11 @@ class [[eosio::contract]] mptcrowdsale : public contract {
             // send EOS
             action transfer_eos = action( 
                 //permission_level
-                permission_level(get_self(),"active"_n),
+                permission_level(get_self(), name("active")),
                 //code (target contract)
-                "eosio.token"_n,
+                name("eosio.token"),
                 //action in target contract
-                "transfer"_n,
+                name("transfer"),
                 //data
                 std::make_tuple(get_self(), token_entry.owner, claimed_funds, std::string("claim_unlocked_funds"))
             );
@@ -80,7 +80,7 @@ class [[eosio::contract]] mptcrowdsale : public contract {
         [[eosio::action]]
         void chcktransfer( name from_account, asset amount, asset total_balance )
         {
-            require_auth( "metpacktoken"_n );
+            require_auth( name("metpacktoken") );
             // Check amount of untouched tokens
             buyers buyerlist( get_self(), get_self().value );
             auto iterator = buyerlist.find( from_account.value );            
@@ -120,7 +120,7 @@ class [[eosio::contract]] mptcrowdsale : public contract {
                 std::string memo;
             } 
             data = unpack_action_data<transfer_t>();                     
-            if (data.from != get_self()) 
+            if (data.from != get_self() && data.to == get_self()) 
             {                
                 buytokens(data.from, data.quantity);
             }
@@ -135,7 +135,7 @@ class [[eosio::contract]] mptcrowdsale : public contract {
                 std::string memo;
             } 
             data = unpack_action_data<transfer_t>();                     
-            if (data.from != get_self() && data.from != "metpacktoken"_n) 
+            if (data.from != get_self() && data.from != name("metpacktoken") && data.to == get_self()) 
             {                
                 returntokens(data.from, data.quantity);
             }
@@ -168,13 +168,13 @@ class [[eosio::contract]] mptcrowdsale : public contract {
             uint64_t primary_key() const { return buyer_name.value; }
         };
 
-        typedef eosio::multi_index<"stats"_n, token > stats;
-        typedef eosio::multi_index<"buyers"_n, buyer> buyers;
+        typedef eosio::multi_index< name("stats"), token > stats;
+        typedef eosio::multi_index< name("buyers"), buyer> buyers;
 
         void unlockeos( uint64_t amount )
         {
             stats statstable( get_self(), get_self().value );
-            const auto& st = statstable.get( "metpacktoken"_n.value, "token not found" );
+            const auto& st = statstable.get( name("metpacktoken").value, "token not found" );
             uint64_t eos_freed = amount * st.ratedenom / st.rate;
             statstable.modify(statstable.begin(), get_self(), [&]( auto& row ){
                 row.funds_unlocked.amount += eos_freed;
@@ -186,17 +186,17 @@ class [[eosio::contract]] mptcrowdsale : public contract {
             // Checks
             require_auth(buyer_name); // can only buy for own account
             stats statstable( get_self(), get_self().value );            
-            const auto& token_entry = statstable.get("metpacktoken"_n.value, "token not found");
-            eosio_assert(payment.symbol.raw() == token_entry.funds_total.symbol.raw(), "incorrect payment token");
-            eosio_assert(payment.amount >= token_entry.minimum_buy.amount, "payment too small");
+            const auto& token_entry = statstable.get( name("metpacktoken").value, "token not found");
+            check(payment.symbol.raw() == token_entry.funds_total.symbol.raw(), "incorrect payment token");
+            check(payment.amount >= token_entry.minimum_buy.amount, "payment too small");
             // check available funds
             // Check timestamp
-            eosio_assert(now() > token_entry.crowdsale_start, "crowdsale has not started");
-            eosio_assert(now() < token_entry.crowdsale_end, "crowdsale period is over");
+            check(now() > token_entry.crowdsale_start, "crowdsale has not started");
+            check(now() < token_entry.crowdsale_end, "crowdsale period is over");
             // calculate tokens to send and check available amount
             int64_t token_amount = payment.amount * token_entry.rate / token_entry.ratedenom;
             asset tokens_bought(token_amount, token_entry.available_tokens.symbol);
-            eosio_assert(tokens_bought <= token_entry.available_tokens, "not enough tokens available");
+            check(tokens_bought <= token_entry.available_tokens, "not enough tokens available");
 
             // modify funds in stat table
             statstable.modify( token_entry, get_self(), [&]( auto& row ) {
@@ -207,11 +207,11 @@ class [[eosio::contract]] mptcrowdsale : public contract {
             // send tokens
             action sendTokens = action( 
                 //permission_level
-                permission_level(get_self(),"active"_n),
+                permission_level(get_self(), name("active")),
                 //code (target contract)
-                "metpacktoken"_n,
+                name("metpacktoken"),
                 //action in target contract
-                "transfer"_n,
+                name("transfer"),
                 //data
                 std::make_tuple(get_self(), buyer_name, tokens_bought, std::string("MPT_crowdsale_buy"))
             );
@@ -239,15 +239,15 @@ class [[eosio::contract]] mptcrowdsale : public contract {
         void returntokens( name from_account, asset amount )
         {
             stats statstable( get_self(), get_self().value );
-            const auto& st = statstable.get( "metpacktoken"_n.value, "token not found" );
+            const auto& st = statstable.get( name("metpacktoken").value, "token not found" );
             // check timestamps
-            eosio_assert(now() > st.buyback_start, "buyback period has not started yet");
-            eosio_assert(now() < st.buyback_end, "buyback period is over");
+            check(now() > st.buyback_start, "buyback period has not started yet");
+            check(now() < st.buyback_end, "buyback period is over");
             // check amount
-            eosio_assert(amount.symbol == st.available_tokens.symbol, "wrong token symbol");
+            check(amount.symbol == st.available_tokens.symbol, "wrong token symbol");
             buyers buyerlist( get_self(), get_self().value );            
             const auto& from = buyerlist.get( from_account.value, "only untraded crowdsale tokens are accepted");
-            eosio_assert(amount <= from.tokens_untouched, "not enough valid tokens");
+            check(amount <= from.tokens_untouched, "not enough valid tokens");
             // edit untouched tokens
             if (amount == from.tokens_untouched) buyerlist.erase( from );
             else
@@ -264,11 +264,11 @@ class [[eosio::contract]] mptcrowdsale : public contract {
             // send EOS to from_account
             action transfer_eos = action( 
                 //permission_level
-                permission_level(get_self(),"active"_n),
+                permission_level(get_self(), name("active")),
                 //code (target contract)
-                "eosio.token"_n,
+                name("eosio.token"),
                 //action in target contract
-                "transfer"_n,
+                name("transfer"),
                 //data
                 std::make_tuple(get_self(), from_account, eos_to_return, std::string("mpt_buyback"))
             );
@@ -278,11 +278,11 @@ class [[eosio::contract]] mptcrowdsale : public contract {
 
 extern "C" void apply(uint64_t receiver, uint64_t code, uint64_t action) 
 {
-    if( action == "transfer"_n.value && code == "eosio.token"_n.value ) 
+    if( action == name("transfer").value && code == name("eosio.token").value ) 
     {
         execute_action<mptcrowdsale>( name(receiver), name(code),&mptcrowdsale::transfer );
     }
-    else if ( action == "transfer"_n.value && code == "metpacktoken"_n.value)
+    else if ( action == name("transfer").value && code == name("metpacktoken").value)
     {
         execute_action<mptcrowdsale>( name(receiver), name(code),&mptcrowdsale::processreturn );
     }
